@@ -1,0 +1,10 @@
+stages:
+  download_dataset:
+    cmd: python scripts/download_dataset.py
+    deps:
+      - scripts/download_dataset.py
+    params:
+      - dataset
+    outs:
+      - data/midi_dataset.zip
+      - data/midi_dataset/

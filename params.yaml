@@ -1,0 +1,4 @@
+dataset:
+  gdrive_url: "https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view"
+  out_zip: "data/midi_dataset.zip"
+  out_unpacked: "data/midi_dataset"

@@ -1,0 +1,25 @@
+schema: '2.0'
+stages:
+  download_dataset:
+    cmd: python scripts/download_dataset.py
+    deps:
+    - path: scripts/download_dataset.py
+      hash: md5
+      md5: e718ad323b308084cfb4c7770e3aad98
+      size: 597
+    params:
+      params.yaml:
+        dataset:
+          gdrive_url: https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view
+          out_zip: data/midi_dataset.zip
+          out_unpacked: data/midi_dataset
+    outs:
+    - path: data/midi_dataset.zip
+      hash: md5
+      md5: aaece5750b0cfe30b6a3be5c7bb14f83
+      size: 192678627
+    - path: data/midi_dataset/
+      hash: md5
+      md5: 6903c5768276dd84ed86a55c334dde93.dir
+      size: 271270589
+      nfiles: 10855
