@@ -25,15 +25,16 @@ class VaeTrainer:
     def train(self, dataloader, epochs):
         for epoch in range(epochs):
             total_loss = 0
-            for batch in dataloader:
+            for i, batch in enumerate(dataloader):
                 batch = batch.to(self.device)
                 loss = self.train_step(batch)
                 total_loss += loss
+                if (i + 1) % self.log_every_n_epochs == 0:
+                    print(f"Epoch [{epoch + 1}/{epochs}], Loss: {total_loss/i:.4f}, Run: {self.run_name}")
+                    self.writter.add_scalar("Loss/Train", total_loss/i, i + epoch * len(dataloader))
             
             avg_loss = total_loss / len(dataloader)
-            if (epoch + 1) % self.log_every_n_epochs == 0:
-                print(f"Epoch [{epoch + 1}/{epochs}], Loss: {avg_loss:.4f}, Run: {self.run_name}")
-                self.writter.add_scalar("Loss/Train", avg_loss, epoch + 1)
+            
         print("Training complete.")
         self.writter.flush()
         self.writter.close()

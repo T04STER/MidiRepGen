@@ -23,3 +23,26 @@ stages:
       md5: 6903c5768276dd84ed86a55c334dde93.dir
       size: 271270589
       nfiles: 10855
+  midi_to_dataset:
+    cmd: python scripts/midi_to_dataset.py
+    deps:
+    - path: data/midi_dataset/
+      hash: md5
+      md5: 6903c5768276dd84ed86a55c334dde93.dir
+      size: 271270589
+      nfiles: 10855
+    - path: scripts/midi_to_dataset.py
+      hash: md5
+      md5: b609f83e13f444746b3921c5ce9ff670
+      size: 3544
+    params:
+      params.yaml:
+        dataset:
+          gdrive_url: https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view
+          out_zip: data/midi_dataset.zip
+          out_unpacked: data/midi_dataset
+    outs:
+    - path: data/preprocessed_piano_roll.pkl
+      hash: md5
+      md5: d233843db19f912b4224c1889e08053e
+      size: 1695025925

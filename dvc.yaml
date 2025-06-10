@@ -8,3 +8,12 @@ stages:
     outs:
       - data/midi_dataset.zip
       - data/midi_dataset/
+  midi_to_dataset:
+    cmd: python scripts/midi_to_dataset.py
+    deps:
+      - scripts/midi_to_dataset.py
+      - data/midi_dataset/
+    params:
+      - dataset
+    outs:
+      - data/preprocessed_piano_roll.pkl

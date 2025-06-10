@@ -15,6 +15,7 @@ class LSTMVaeEncoder(VaeEncoder):
     def __init__(self, input_dim: int, hidden_dim: int, latent_dim: int, num_layers:int=1):
         super().__init__()
 
+        self.linear = nn.Linear(hidden_dim, hidden_dim)
         self.lstm = nn.LSTM(
             input_size=input_dim,
             hidden_size=hidden_dim,
@@ -35,7 +36,8 @@ class LSTMVaeEncoder(VaeEncoder):
         Returns:
             Encoded representation of the input data. [batch size, sequence length, latent dimension], [batch size, sequence length, latent dimension]
         """
-        lstm_out, _ = self.lstm(x)
+        _, (h_n, _) = self.lstm(x)
+        lstm_out = h_n[-1]
         mu_linear_out = self.mu_linear(lstm_out)
         logvar_linear_out = self.logvar_linear(lstm_out)
         return mu_linear_out, logvar_linear_out

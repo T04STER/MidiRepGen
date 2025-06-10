@@ -10,20 +10,12 @@ class LSTMVaeDecoder(VaeDecoder):
         self.lstm = nn.LSTM(
             input_size=latent_dim,
             hidden_size=hidden_dim,
+            num_layers=num_layers,
             batch_first=True,
         )
         self.fc_out = nn.Linear(hidden_dim, output)
     
     def forward(self, z: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass through the decoder.
-        
-        Args:
-            z: Latent variable tensor.
-        
-        Returns:
-            Reconstructed output tensor.
-        """
         lstm_out, _ = self.lstm(z)
         out = self.fc_out(lstm_out)
         return out

@@ -2,3 +2,12 @@ dataset:
   gdrive_url: "https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view"
   out_zip: "data/midi_dataset.zip"
   out_unpacked: "data/midi_dataset"
+
+preprocess:
+  sample_rate: 0.1
+  out_piano_roll: "data/preprocessed_piano_roll.pkl"
+  out_event: "data/preprocessed_midi.pkl"
+  frames_per_second: 64
+
+
+random_seed: 42

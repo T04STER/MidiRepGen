@@ -17,6 +17,8 @@ class RecurrentVae(nn.Module):
         x = x.contiguous()
         mu, logvar = self.encoder(x)
         z = self.reparameterize(mu, logvar)
+        z = z.unsqueeze(1).repeat(1, x.size(1), 1)
+
         x_reconstructed = self.decoder(z)
         return x_reconstructed, mu, logvar
     
