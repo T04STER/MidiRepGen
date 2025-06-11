@@ -26,3 +26,5 @@ class VaeLoss(nn.Module):
         divergence = self.beta*self.kl_divergence(mu, logvar)
         reconstruction_loss = self.mse_loss(x_reconstructed, x)
         return reconstruction_loss + divergence
+
+
