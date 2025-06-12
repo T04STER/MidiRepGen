@@ -16,14 +16,16 @@ def parse_midi_file_to_sparse(
     """
     Parses a MIDI file and converts it to a sparse matrix representation.
 
-    Args:
-        midi_file_path (str): Path to the MIDI file.
-        frame_per_second (int): Sampling frequency for piano roll.
-        strip_bounds (bool): Whether to strip silent frames from the start and end.
-        strip_pitch (Tuple[int, int], optional): Range of pitches to retain (start, end).
-
-    Returns:
-        scipy.sparse.csr_matrix: Sparse representation of the MIDI piano roll (time x pitch).
+    :param midi_file_path: Path to the MIDI file.
+    :type midi_file_path: str
+    :param frame_per_second: Sampling frequency for piano roll.
+    :type frame_per_second: int
+    :param strip_bounds: Whether to strip silent frames from the start and end.
+    :type strip_bounds: bool
+    :param strip_pitch: Range of pitches to retain (start, end).
+    :type strip_pitch: tuple[int, int], optional
+    :return: Sparse representation of the MIDI piano roll (time x pitch).
+    :rtype: scipy.sparse.csr_matrix
     """
     if not os.path.exists(midi_file_path):
         raise FileNotFoundError(f"MIDI file not found: {midi_file_path}")
@@ -57,11 +59,10 @@ def _strip_numpy_array(arr: np.ndarray) -> Optional[np.ndarray]:
     """
     Removes leading and trailing rows with only zeros (i.e., silence).
 
-    Args:
-        arr (np.ndarray): 2D array (time x pitch)
-
-    Returns:
-        np.ndarray: Stripped array or None if fully silent.
+    :param arr: 2D array (time x pitch)
+    :type arr: np.ndarray
+    :return: Stripped array or None if fully silent.
+    :rtype: np.ndarray or None
     """
     if arr is None or arr.ndim != 2:
         return None
@@ -74,69 +75,97 @@ def _strip_numpy_array(arr: np.ndarray) -> Optional[np.ndarray]:
     end_idx = len(non_zero_rows) - np.argmax(non_zero_rows[::-1])
     return arr[start_idx:end_idx]
 
-def parse_tensor_to_midi_file(
-    tensor: torch.Tensor, output_file_path: str, frame_per_second: int = 128
-):
+
+def piano_roll_to_pretty_midi(piano_roll, fs=64, path="eg.mid", pitch_range=(24, 84)):
     """
-    Converts a tensor representation of a piano roll back to a MIDI file.
-
-    Args:
-        tensor (torch.Tensor): A [T, 128] piano roll tensor.
-        output_file_path (str): Path to save the output MIDI file.
-        frame_per_second (int): Sampling rate for the piano roll.
+    Convert a piano roll (tensor or array) to a MIDI file using pretty_midi.
+    Expects piano_roll to be shape [time, pitch] and in range [0, 1].
     """
-    try:
-        piano_roll = tensor.cpu().numpy().T
-        midi = pretty_midi.PrettyMIDI()
-        instrument = pretty_midi.Instrument(program=0)
-
-        for pitch in range(piano_roll.shape[0]):
-            velocity_track = piano_roll[pitch]
-            is_active = velocity_track > 0
-
-            padded = np.pad(is_active.astype(np.int8), (1, 1))
-            changes = np.diff(padded)
-
-            note_on_times = np.where(changes == 1)[0]
-            note_off_times = np.where(changes == -1)[0]
-
-            for start, end in zip(note_on_times, note_off_times):
-                velocity = int(np.max(velocity_track[start:end]) * 127)
+    if isinstance(piano_roll, torch.Tensor):
+        piano_roll = (piano_roll * 127).clamp(0, 127).detach().cpu().numpy().astype(np.int32)
+    
+    pm = pretty_midi.PrettyMIDI()
+    instrument = pretty_midi.Instrument(program=0)
+    
+    pitch_offset = pitch_range[0]
+    time_steps, pitch_count = piano_roll.shape
+    
+    for pitch_idx in range(pitch_count):
+        pitch = pitch_idx + pitch_offset
+        
+        note_on = False
+        note_start = 0
+        
+        for time in range(time_steps):
+            velocity = piano_roll[time, pitch_idx]
+            
+            if velocity > 0 and not note_on:
+                note_on = True
+                note_start = time
+                note_velocity = int(velocity)
+            elif velocity == 0 and note_on:
+                note_on = False
                 note = pretty_midi.Note(
-                    velocity=velocity if velocity > 0 else 100,
+                    velocity=note_velocity,
                     pitch=pitch,
-                    start=start / frame_per_second,
-                    end=end / frame_per_second,
+                    start=note_start / fs,
+                    end=time / fs
                 )
                 instrument.notes.append(note)
+        
+        if note_on:
+            note = pretty_midi.Note(
+                velocity=note_velocity,
+                pitch=pitch,
+                start=note_start / fs,
+                end=time_steps / fs
+            )
+            instrument.notes.append(note)
+    
+    pm.instruments.append(instrument)
+    pm.write(path)
 
-        midi.instruments.append(instrument)
-        midi.write(output_file_path)
-    except Exception as e:
-        raise ValueError(f"Error writing MIDI file {output_file_path}: {e}")
 
 
-
-def parse_midi_file_to_pitch_start_end_tensor(midi_file_path: str) -> torch.Tensor:
+def parse_midi_file_to_pitch_start_end_tensor(midi_file_path: str) -> Optional[np.ndarray]:
     """
     Parses a MIDI file and converts it to a tensor representation of pitch, start, and end times.
 
-    Args:
-        midi_file_path (str): Path to the MIDI file.
+    :param midi_file_path: Path to the MIDI file.
+    :type midi_file_path: str
 
-    Returns:
-        torch.Tensor: A tensor representation of the MIDI file with shape [N, 3],
-                      where N is the number of notes, and each row contains [pitch, start, end].
+    :return: A tensor representation of the MIDI file with shape [N, 4],
+             where N is the number of notes, and each row contains [pitch, velocity, delta_start, duration].
+             Returns None if no notes are found.
+    :rtype: np.ndarray or None
     """
-    def parse_midi_file(midi_file_path):
-        midi_data = pretty_midi.PrettyMIDI(midi_file_path)
-        notes = []
-        for instrument in midi_data.instruments:
-            for note in instrument.notes:
-                notes.append([note.pitch, note.start, note.end, note.velocity])
-        return np.array(notes)
+    midi_data = pretty_midi.PrettyMIDI(midi_file_path)
+    notes = []
+    for instrument in midi_data.instruments:
+        for note in instrument.notes:
+            notes.append([note.pitch, note.velocity, note.start, note.end ])
 
-    def convert_to_tensor(notes):
-        return torch.tensor(notes, dtype=torch.float32)
+    if not notes:
+        return None
 
-    return convert_to_tensor(parse_midi_file(midi_file_path))
+    # encode start and end time to as delta of previous note and duration
+    delta_time_notes = []
+    for i in range(len(notes)):
+        if i == 0:
+            note = notes[i]
+            duration = note[3] - note[2]
+            delta_time_notes.append([note[0], note[1], note[2], duration])
+        else:
+            note = notes[i]
+            prev_note = notes[i - 1]
+            delta_time = note[2] - prev_note[3]
+            duration = note[3] - note[2]
+            delta_time_notes.append([note[0], note[1], delta_time, duration])
+            
+    notes_np = np.array(delta_time_notes, dtype=np.float32)
+    # normalize pitch, velocity to [0, 1]
+    notes_np[:, 0] = notes_np[:, 0] / 127.0
+    notes_np[:, 1] = notes_np[:, 1] / 127.0
+    return notes_np
+    
+

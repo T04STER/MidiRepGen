@@ -46,3 +46,49 @@ stages:
       hash: md5
       md5: d233843db19f912b4224c1889e08053e
       size: 1695025925
+  midi_to_dataset@piano_roll:
+    cmd: python scripts/midi_to_dataset.py --mode piano_roll
+    deps:
+    - path: data/midi_dataset/
+      hash: md5
+      md5: 6903c5768276dd84ed86a55c334dde93.dir
+      size: 271270589
+      nfiles: 10855
+    - path: scripts/midi_to_dataset.py
+      hash: md5
+      md5: b1e0a9e3c7c3784d79f9a833633d4e4b
+      size: 4164
+    params:
+      params.yaml:
+        dataset:
+          gdrive_url: https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view
+          out_zip: data/midi_dataset.zip
+          out_unpacked: data/midi_dataset
+    outs:
+    - path: data/preprocessed_piano_roll.pkl
+      hash: md5
+      md5: d233843db19f912b4224c1889e08053e
+      size: 1695025925
+  midi_to_dataset@note_events:
+    cmd: python scripts/midi_to_dataset.py --mode note_events
+    deps:
+    - path: data/midi_dataset/
+      hash: md5
+      md5: 6903c5768276dd84ed86a55c334dde93.dir
+      size: 271270589
+      nfiles: 10855
+    - path: scripts/midi_to_dataset.py
+      hash: md5
+      md5: f9f20fcb54bbfc571956bcfdd3a0ea61
+      size: 4212
+    params:
+      params.yaml:
+        dataset:
+          gdrive_url: https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view
+          out_zip: data/midi_dataset.zip
+          out_unpacked: data/midi_dataset
+    outs:
+    - path: data/preprocessed_note_events.pkl
+      hash: md5
+      md5: 1efc5979241474f1b0f463c4fe555661
+      size: 60994573

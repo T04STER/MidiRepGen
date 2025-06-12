@@ -14,7 +14,7 @@ from pathlib import Path
 import pickle
 import random
 import torch
-from src.dataloader.dataset import PianoRollMidiDataset
+from src.dataloader.dataset import PianoRollMidiDataset, EventMidiDataset
 from src.common.config_utils import get_config
 
 def subsample(records, sample_rate=0.1):
@@ -56,6 +56,16 @@ def piano_roll_dataset(sampled_midi_files_dir, out_path:str, frame_per_second=64
     print(f"Dataset saved to {out_path}")
     
 
+def event_based_dataset(sampled_midi_files_dir, out_path:str, note_count=None):
+    if note_count is None:
+        note_count = 128
+    dataset = EventMidiDataset(sampled_midi_files_dir, verbose=True, note_count=note_count)
+
+    pickle.dump(
+        dataset,
+        open(out_path, "wb"),
+    )
+
 
 def main(args):
     config = get_config()
@@ -85,7 +95,12 @@ def main(args):
                 raise ValueError("Output path for piano roll dataset must end with .pkl")
             piano_roll_dataset(midi_files, out_path, frame_per_second=preprocess_config.get("frame_per_second", 64))
         case "note_events":
-            raise NotImplementedError("Note events mode is not implemented yet.")
+            out_path = preprocess_config.get("out_note_events")
+            if not out_path:
+                raise ValueError("Output path for note events dataset is not specified in the config.")
+            if not out_path.endswith(".pkl"):
+                raise ValueError("Output path for note events dataset must end with .pkl")
+            event_based_dataset(midi_files, out_path, note_count=preprocess_config.get("note_count"))
         case _:
             raise ValueError(f"Unknown mode: {args.mode}")
 

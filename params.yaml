@@ -6,7 +6,7 @@ dataset:
 preprocess:
   sample_rate: 0.1
   out_piano_roll: "data/preprocessed_piano_roll.pkl"
-  out_event: "data/preprocessed_midi.pkl"
+  out_note_events: "data/preprocessed_note_events.pkl"
   frames_per_second: 64
 
 

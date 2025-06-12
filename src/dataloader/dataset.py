@@ -1,6 +1,7 @@
 from functools import lru_cache
 import os
 from typing import Optional
+import numpy as np
 from scipy import sparse
 import torch
 from torch.utils.data import Dataset
@@ -104,77 +105,72 @@ class PianoRollMidiDataset(Dataset):
 
 
 
-class MidiDatasetV2(Dataset):
-    def __init__(self, midi_files_dir, verbose: bool = False, strip_bounds: bool = True):
+class EventMidiDataset(Dataset):
+    def __init__(self, midi_files: list[str], note_count=10, verbose: bool = False):
         """
-        Initializes the MidiDataset with a directory containing MIDI files.
+        Initializes the EveMidiDataset with a directory containing MIDI files.
+        Splits it into time windows with specified note count.
 
-        Args:
-            midi_files_dir (str): Path to the directory containing MIDI files.
-            frame_per_second (int): Frame rate for the MIDI files.
-            verbose (bool): If True, prints information about the dataset.
-            strip_bounds (bool): If True, strips zeroes frames from the beginning and end of the MIDI files.
+        :param midi_files: List of paths to MIDI files.
+        :type midi_files: list[str]
+
+        :param note_count: Count of notes to split into a widnow.
+        :type note_count: int
+
+        :param verbose: If True, prints information about the dataset.
+        :type verbose: bool
+
         """
-        self.midi_files_dir = midi_files_dir
-        self.midi_files = [f for f in os.listdir(midi_files_dir) if f.endswith(".mid")]
-        if not self.midi_files:
-            raise ValueError(f"No MIDI files found in directory: {midi_files_dir}")
+        if not midi_files:
+            raise ValueError("The list of MIDI files is empty.")
+
+        self._note_count = note_count            
         self.verbose = verbose
         if verbose:
-            print(f"Found {len(self.midi_files)} MIDI files in {midi_files_dir}")
+            print(f"Got {len(midi_files)} MIDI files")
 
-        self.strip_bounds = strip_bounds
+        self.midi_list: list[np.array] = []  # more efficient storage of MIDI tensors
+        self._init_midi_tensors(midi_files)
+
+
+    def _split_into_time_windows(self, event_tensor: np.ndarray) -> list[np.ndarray]:
+        """
+        Splits the tensor into time windows of specified length.
+
+        :param event_tensor: The preprocessed tensor to split (shape: [time, pitch]).
+        :return: List of tensors, each representing a time window.
+        """
+        total_rows = event_tensor.shape[0]
+        return [
+            event_tensor[i:i + self._note_count]
+            for i in range(0, total_rows - self._note_count, self._note_count)
+        ]
+
+
+
+    def _init_midi_tensors(self, midi_files: list[str]):
+        """
+        Initializes the MIDI tensors by parsing each MIDI file and converting it to a tensor representation.
+        """
+        iter_ = tqdm.tqdm(midi_files) if self.verbose else midi_files
+        for midi_file in iter_:
+            midi_tensor = parse_midi_file_to_pitch_start_end_tensor(midi_file)
+            if midi_tensor is None or midi_tensor.shape[0] == 0:
+                if self.verbose:
+                    print(f"Warning: MIDI file {midi_file} could not be parsed or is empty.")
+            else:
+                splited_midi = self._split_into_time_windows(midi_tensor)
+                self.midi_list.extend(splited_midi)
+        
+        if self.verbose:
+            print(f"Initialized {len(self.midi_list)} MIDI tensors.")
 
     def __len__(self):
-        """
-        Returns the number of MIDI files in the dataset.
+        return len(self.midi_list)
 
-        Returns:
-            int: Number of MIDI files.
-        """
-        return len(self.midi_files)
-
+    @lru_cache(maxsize=1024)
     def __getitem__(self, idx):
-        """
-        Retrieves a MIDI file by index.
-
-        Args:
-            idx (int): Index of the MIDI file to retrieve.
-
-        Returns:
-            str: Path to the MIDI file.
-        """
-        if idx < 0 or idx >= len(self.midi_files):
+        if idx < 0 or idx >= len(self.midi_list):
             raise IndexError("Index out of range.")
-
-        midi_file_path = os.path.join(self.midi_files_dir, self.midi_files[idx])
-        midi_tensor = parse_midi_file_to_pitch_start_end_tensor(midi_file_path)
-        if self.strip_bounds:
-            midi_tensor = self.strip_tensor(midi_tensor)
-        return midi_tensor
-
-    def strip_tensor(self, tensor: torch.Tensor) -> torch.Tensor:
-        """
-        Strips zero frames from the beginning and end of the tensor.
-
-        Args:
-            tensor (torch.Tensor): The tensor to strip.
-
-        Returns:
-            torch.Tensor: The stripped tensor.
-        """
-        non_zero_mask = tensor.abs().sum(dim=tuple(range(1, tensor.dim()))) != 0
-        non_zero_indices = non_zero_mask.nonzero(as_tuple=False).squeeze()
-        if non_zero_indices.numel() == 0:
-            if self.verbose:
-                print("Warning: Tensor is empty after stripping.")
-            return tensor
-        
-        start_idx = non_zero_indices[0].item()
-        end_idx = non_zero_indices[-1].item() + 1
-        print(f"Stripping tensor from {start_idx} to {end_idx}") if self.verbose else None
-        debug_clip_range = min(100, end_idx - start_idx)
-        end_idx = start_idx + debug_clip_range
-        return tensor[start_idx:end_idx]
-        
-        
+        np_array = self.midi_list[idx]
+        return torch.tensor(np_array, dtype=torch.float32)
