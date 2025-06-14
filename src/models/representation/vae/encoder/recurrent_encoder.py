@@ -80,7 +80,7 @@ class LSTMVaeEncoderPitchEmbedding(VaeEncoder):
         """
         pitch_embeddings = self.pitch_embedding(x[:, :, 0].long())
         # print(f"Pitch embeddings shape: {pitch_embeddings.shape}")
-        linear_out = self.linear(x[:, :, 1:]).relu_()
+        linear_out = self.linear(x[:, :, 1:]).relu()
         # print(f"Linear out shape: {linear_out.shape}")
         x = torch.cat((linear_out, pitch_embeddings), dim=-1)
         # print(f"Concatenated input shape: {x.shape}")

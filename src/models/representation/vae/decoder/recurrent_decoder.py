@@ -188,7 +188,7 @@ class LSTMVaeDecoderWithTeacherForcingPitchEmbeddedResidualMemory(LSTMVaeDecoder
         # print(f"Hidden state shape: {hidden[0].shape}, {hidden[1].shape}")
         out_intermediate = torch.relu(self.fc_out(out))
         pitch = self.pitch_linear(out_intermediate)
-        other = torch.relu(self.other_scaling(out_intermediate))
+        other = nn.functional.softplus(self.other_scaling(out_intermediate))
         hidden = hidden[0] + hidden_z[0], hidden[1] + hidden_z[1]
         # print(f"Hidden state after residual memory shape: {hidden[0].shape}, {hidden[1].shape}")
         return (pitch, other), hidden
