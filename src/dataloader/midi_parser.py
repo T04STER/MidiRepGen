@@ -149,6 +149,7 @@ def parse_midi_file_to_pitch_start_end_tensor(midi_file_path: str) -> Optional[n
         return None
 
     # encode start and end time to as delta of previous note and duration
+    notes.sort(key=lambda x: x[2])
     delta_time_notes = []
     for i in range(len(notes)):
         if i == 0:
@@ -158,13 +159,13 @@ def parse_midi_file_to_pitch_start_end_tensor(midi_file_path: str) -> Optional[n
         else:
             note = notes[i]
             prev_note = notes[i - 1]
-            delta_time = note[2] - prev_note[3]
+            # delta betwen previous start and current start
+            delta_time = note[2] - prev_note[2]
             duration = note[3] - note[2]
             delta_time_notes.append([note[0], note[1], delta_time, duration])
             
     notes_np = np.array(delta_time_notes, dtype=np.float32)
-    # normalize pitch, velocity to [0, 1]
-    notes_np[:, 0] = notes_np[:, 0] / 127.0
+    # normalize velocity to [0, 1], pitch stays as ordinal value will use embedding
     notes_np[:, 1] = notes_np[:, 1] / 127.0
     return notes_np
     

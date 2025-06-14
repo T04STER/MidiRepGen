@@ -4,9 +4,7 @@
     - piano roll 
         Embeds the MIDI file as a piano roll tensor. With 64 Frames per second,
     - note events:
-        Each note event is represented as [pitch, velocity, start_time, end_time].
-    - note events:
-        Each note event is represented as [pitch, velocity, delta_time, silence].
+        Each note event is represented as [pitch, velocity, delta_time, silence].   
 """
 import argparse
 import os
@@ -16,6 +14,7 @@ import random
 import torch
 from src.dataloader.dataset import PianoRollMidiDataset, EventMidiDataset
 from src.common.config_utils import get_config
+
 
 def subsample(records, sample_rate=0.1):
     """
@@ -29,7 +28,6 @@ def subsample(records, sample_rate=0.1):
     
     sample_size = int(len(records) * sample_rate)
     return random.sample(records, sample_size)
-
 
 
 def get_argparser():
@@ -58,7 +56,7 @@ def piano_roll_dataset(sampled_midi_files_dir, out_path:str, frame_per_second=64
 
 def event_based_dataset(sampled_midi_files_dir, out_path:str, note_count=None):
     if note_count is None:
-        note_count = 128
+        note_count = 32
     dataset = EventMidiDataset(sampled_midi_files_dir, verbose=True, note_count=note_count)
 
     pickle.dump(
@@ -109,4 +107,3 @@ if __name__ == "__main__":
     parser = get_argparser()
     args = parser.parse_args()
     main(args)
-    

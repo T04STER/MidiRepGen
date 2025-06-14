@@ -17,5 +17,6 @@ stages:
       - data/midi_dataset/
     params:
       - dataset
+      - preprocess.sample_rate
     outs:
       - data/preprocessed_${item.mode}.pkl
