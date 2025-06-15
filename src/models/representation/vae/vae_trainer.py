@@ -11,7 +11,6 @@ class VaeTrainer:
         self.use_tqdm = use_tqdm
         self.model = model
         self.run_name = run_name if run_name else model.__class__.__name__
-        self.log_every_n_epochs = log_every_n_epochs
         self.optimizer = optimizer
         self.loss_fn = loss_fn
         self.writter = torch_writter.get_writter(self.run_name, prefix="vae")

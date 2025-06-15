@@ -90,11 +90,11 @@ class VaeLossWithCrossEntropy(nn.Module):
         logvar: torch.Tensor,
     ):
         pitch_logits, others_to_mse = x_reconstructed
-        divergence = self.beta*self.kl_divergence(mu, logvar)
+        divergence = self.kl_divergence(mu, logvar)
         pitch_targets = x[:, :, 0]
         # print(f"Pitch one-hot shape: {pitch_one_hot.shape}, Pitch targets shape: {pitch_targets.shape}")
         ce_loss = self.cross_entropy_loss(pitch_logits, pitch_targets.long())
         # print(f"CE Loss: {ce_loss.item()}, Divergence: {divergence.item()}")
         mse_loss = self.mse_loss(others_to_mse, x[:, :, 1:])
         # print(f"MSE Loss: {mse_loss.item()}")
-        return ce_loss + mse_loss + divergence, (ce_loss.item(), mse_loss.item(), divergence.item())
+        return ce_loss + mse_loss + self.beta*divergence, (ce_loss.item(), mse_loss.item(), divergence.item())
