@@ -87,9 +87,10 @@ stages:
           gdrive_url: https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view
           out_zip: data/midi_dataset.zip
           out_unpacked: data/midi_dataset
-        preprocess.sample_rate: 0.5
+        preprocess.note_count: 8
+        preprocess.sample_rate: 0.9
     outs:
     - path: data/preprocessed_note_events.pkl
       hash: md5
-      md5: 7cb5a9da97960f3f82e6119028e4b48a
-      size: 331453371
+      md5: 7a5356862379419d19a6c1f247bbbcd2
+      size: 703569994

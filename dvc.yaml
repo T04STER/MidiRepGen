@@ -18,5 +18,6 @@ stages:
     params:
       - dataset
       - preprocess.sample_rate
+      - preprocess.note_count
     outs:
       - data/preprocessed_${item.mode}.pkl

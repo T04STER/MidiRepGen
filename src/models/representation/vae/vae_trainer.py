@@ -46,19 +46,29 @@ class VaeTrainer:
                 total_loss += loss
                 for j, other in enumerate(others):
                     total_others[j] += other
-            self.model.decoder.step_teacher_forcing()
             avg_loss = total_loss / len(dataloader)
             self.writter.add_scalar("Loss/Train", avg_loss, epoch)
             for j, other in enumerate(total_others):
                 name = other_losses.get(j, f"Other Loss {j}")
                 other /= len(dataloader)
                 self.writter.add_scalar(f"Loss/Train/{name}", other, epoch)
+            self.step_epoch()
             if self.use_tqdm:
                 iter_epochs.set_description(f"Epoch {epoch + 1}/{epochs} - Loss: {avg_loss:.4f}")
             
         print("Training complete.")
         self.writter.flush()
         self.writter.close()
+
+    
+    def step_epoch(self):
+        """
+        Perform any necessary operations at the end of an epoch.
+        This can be used to update the model's state or perform logging.
+        """
+        self.model.decoder.step_teacher_forcing()
+        if getattr(self.loss_fn, 'kl_annealing', False):
+            self.loss_fn.annealing_step()
     
     def graph_model(self, input_tensor):
         """

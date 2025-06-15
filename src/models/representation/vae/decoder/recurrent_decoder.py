@@ -172,8 +172,8 @@ class LSTMVaeDecoderWithTeacherForcingPitchEmbeddedResidualMemory(LSTMVaeDecoder
         Convert latent vector z to hidden and cell states for LSTM.
         """
         z = z.unsqueeze(0)
-        h0 = self.latent_to_hidden(z).repeat(self.num_layers, 1, 1)  # [num_layers, batch_size, hidden_dim]
-        c0 = self.latent_to_cell(z).repeat(self.num_layers, 1, 1)  # [num_layers, batch_size, hidden_dim]
+        h0 = torch.tanh(self.latent_to_hidden(z)).repeat(self.num_layers, 1, 1)  # [num_layers, batch_size, hidden_dim]
+        c0 = torch.tanh(self.latent_to_cell(z)).repeat(self.num_layers, 1, 1)  # [num_layers, batch_size, hidden_dim]
         return h0, c0
 
 

@@ -37,11 +37,17 @@ class VaeLoss(nn.Module):
 
 
 class VaeLossWithCrossEntropy(nn.Module):
-    def __init__(self, reduction="sum", beta=1.0):
+    def __init__(self, reduction="sum", beta=1.0, beta_max=1.0, beta_step=None):
         super(VaeLossWithCrossEntropy, self).__init__()
         self.beta = beta
         self.reduction = reduction
         self.ce_loss_fn = nn.CrossEntropyLoss(reduction="none")
+        self.beta_max = beta_max
+        self.beta_step = beta_step
+        self.kl_annealing = False if beta_step is None else True
+        self.beta = beta if not self.kl_annealing else 0.0
+        if self.kl_annealing and beta_step is None and beta_step <= 0:
+            raise ValueError("If kl_anneling is True, beta_step must be greater than 0.")
     
     def cross_entropy_loss(self, x_reconstructed: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         if self.reduction == "mean":
@@ -72,6 +78,10 @@ class VaeLossWithCrossEntropy(nn.Module):
             kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         return kl
     
+    def annealing_step(self):
+        if self.kl_annealing and self.beta < self.beta_max:
+            self.beta += self.beta_step
+
     def forward(
         self,
         x_reconstructed: torch.Tensor,

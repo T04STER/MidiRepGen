@@ -48,10 +48,10 @@ class RecurrentVaeWithTeacherForcing(RecurrentVae):
     def forward(self, x):
         x = x.contiguous()
         mu, logvar = self.encoder(x)
-        # z = self.reparameterize(mu, logvar)
+        z = self.reparameterize(mu, logvar)
 
-        # x_reconstructed = self.decoder(z, seq_length=x.size(1), true_output=x)
-        x_reconstructed = self.decoder(mu, seq_length=x.size(1), true_output=x)
+        x_reconstructed = self.decoder(z, seq_length=x.size(1), true_output=x)
+        # x_reconstructed = self.decoder(mu, seq_length=x.size(1), true_output=x)
         return x_reconstructed, mu, logvar
     
 
