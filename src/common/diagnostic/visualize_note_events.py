@@ -51,9 +51,9 @@ def compare_reco_true(true: torch.Tensor|np.ndarray, reco: torch.Tensor|np.ndarr
     """
         Compares true and reconstructed piano rolls.
     """
-    fig, ax = plt.subplots(1, 1, figsize=figsize, sharex=True)
-    plot_piano_roll_from_note_events(true, figsize=figsize, fig=fig, ax=ax, cmap='Blues')
-    plot_piano_roll_from_note_events(reco, figsize=figsize, fig=fig, ax=ax, cmap='Reds')
+    fig, ax = plt.subplots(figsize=figsize, sharex=True)
+    plot_piano_roll_from_note_events(true, figsize=figsize, fig=fig, ax=ax, cmap='Blues', show=False)
+    plot_piano_roll_from_note_events(reco, figsize=figsize, fig=fig, ax=ax, cmap='Reds', show=False)
 
     acc, iou, _ = pitch_match_accuracy_iou_ordered(
         reco, true, iou_threshold=threshold

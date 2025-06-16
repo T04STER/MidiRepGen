@@ -16,15 +16,10 @@ def _latent_samples_to_numpy(latent_samples: list[torch.Tensor] | torch.Tensor) 
         np.ndarray: Numpy array of shape (samples_num, latent_dim).
     """
     if isinstance(latent_samples, torch.Tensor):
-        if latent_samples.ndim != 2:
-            raise ValueError("Latent samples tensor must be 2D or 1D.")
         return latent_samples.cpu().numpy()
     elif isinstance(latent_samples, list):
-        if not all(isinstance(sample, torch.Tensor) for sample in latent_samples):
-            raise ValueError("All elements in the list must be torch.Tensor.")
-        if not all(sample.ndim == 2 for sample in latent_samples):
-            raise ValueError("All latent samples must be 2D tensors.")
         latents_list = [sample.cpu().numpy() for sample in latent_samples]
+        print(f"Converting {len(latents_list)} latent samples to numpy array.")
         return np.concatenate(latents_list, axis=0)
     else:
         raise TypeError("latent_samples must be a list of torch.Tensor or a single torch.Tensor.")
@@ -39,7 +34,9 @@ def plot_pca(latent_samples: list[torch.Tensor] | torch.Tensor) -> tuple[plt.Fig
         tuple[plt.Figure, plt.Axes]: Figure and axes of the PCA plot.
     """
     pca = PCA(n_components=2)
-    reduced = pca.fit_transform(_latent_samples_to_numpy(latent_samples))
+    latent_samples_np = _latent_samples_to_numpy(latent_samples)
+    print(f"Converting latent samples to numpy array for PCA. Shape: {latent_samples_np.shape}")
+    reduced = pca.fit_transform(latent_samples_np)
     fig, ax = plt.subplots(figsize=(10, 10))
 
     ax.scatter(reduced[:, 0], reduced[:, 1], alpha=0.5)
