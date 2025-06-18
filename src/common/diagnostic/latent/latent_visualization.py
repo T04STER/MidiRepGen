@@ -65,3 +65,22 @@ def plot_tsne(latent_samples: list[torch.Tensor] | torch.Tensor) -> tuple[plt.Fi
     ax.set_ylabel("t-SNE Component 2")
     
     return fig, ax
+
+def plot_tsne_3d(latent_samples: list[torch.Tensor] | torch.Tensor) -> tuple[plt.Figure, plt.Axes]:
+    """
+    Plots 3D t-SNE of the latent space.
+    Args:
+        latent_samples (list[torch.Tensor] | torch.Tensor): List of latent samples or a single tensor of shape
+            (samples_num, latent_dim).
+    Returns:
+        tuple[plt.Figure, plt.Axes]: Figure and axes of the 3D t-SNE plot.
+    """
+    tsne = TSNE(n_components=3, random_state=42)
+    reduced = tsne.fit_transform(_latent_samples_to_numpy(latent_samples))
+    
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(reduced[:, 0], reduced[:, 1], reduced[:, 2], alpha=0.5)
+    ax.set_title("3D t-SNE of Latent Space")
+    
+    return fig, ax

@@ -1,5 +1,8 @@
 import numpy as np
 import torch
+import tqdm
+
+from src.models.representation.vae.vae import RecurrentVae
 
 
 def iou_intervals(pred_start, pred_duration, target_start, target_duration):
@@ -66,3 +69,39 @@ def pitch_match_accuracy_iou_ordered(pred_notes: np.ndarray | torch.Tensor, targ
     
     accuracy = pitch_matches.sum() / N if N > 0 else 0.0
     return accuracy, ious, matches
+
+
+@torch.inference_mode()
+def get_vae_metrics(model: RecurrentVae, dataloader, device, addapter_fn=None, verbose=True):
+    """
+    Computes metrics for the model on the given dataloader.
+    :param model: The model to evaluate.
+    :param dataloader: DataLoader containing the data to evaluate on.
+    :param device: Device to run the evaluation on (e.g., 'cuda' or 'cpu').
+    :return: Dictionary containing the average IoU and accuracy across all batches.
+    """
+    if addapter_fn is None:
+        from src.common.diagnostic.misc import vae_adapter
+        addapter_fn = vae_adapter
+    model.eval()
+    iou_sum = 0.0
+    accuracy_sum = 0.0
+    iter = tqdm.tqdm(dataloader, desc="Evaluating model") if verbose else dataloader
+    for batch in iter:
+        batch = batch.to(device)
+        pred_notes = addapter_fn(batch, model)
+        tuples = [
+            pitch_match_accuracy_iou_ordered(pred, real)
+            for pred, real in zip(pred_notes, batch)
+        ]
+        
+        iou_sum += sum(t[1].mean() for t in tuples) / len(tuples)
+        accuracy_sum += sum(t[0] for t in tuples) / len(tuples)
+    
+    avg_iou = iou_sum / len(dataloader)
+    avg_accuracy = accuracy_sum / len(dataloader)
+    return {
+        "avg_iou": avg_iou,
+        "avg_accuracy": avg_accuracy,
+        "total_batches": len(dataloader),
+    }

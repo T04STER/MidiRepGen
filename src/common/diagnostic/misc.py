@@ -24,7 +24,6 @@ def vae_adapter(x, vae: RecurrentVae) -> torch.Tensor:
             torch.Tensor: The reconstructed tensor of shape [batch_size, seq_length, 4].
     """
     vae.eval()
-
     out, _, _ = vae(x.cuda())
     pitches_one_hot, others = out
     pitches = (torch.argmax(pitches_one_hot, dim=-1)).unsqueeze(-1)

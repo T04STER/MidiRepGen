@@ -8,8 +8,28 @@ from src.common.metrics.metrics import pitch_match_accuracy_iou_ordered
 
 
 def plot_piano_roll_from_note_events(note_array: torch.Tensor|np.ndarray, figsize=(10, 4), title=None, fig=None, ax=None, show=True, show_colorbar=True, cmap='viridis'):
+    """
+    Expects a note array of shape (N, 4) where each row is [pitch, velocity, delta_time, duration].
+    Args:
+        note_array (torch.Tensor or np.ndarray): Array of note events.
+        figsize (tuple): Size of the figure.
+        title (str): Title of the plot.
+        fig (plt.Figure): Figure to plot on, if None a new figure is created.
+        ax (plt.Axes): Axes to plot on, if None a new axes is created.
+        show (bool): Whether to show the plot.
+        show_colorbar (bool): Whether to show the colorbar for velocities.
+        cmap (str): Colormap to use for velocities.
+    Returns:
+        fig (plt.Figure): The figure object.
+        ax (plt.Axes): The axes object.
+    """
     if not isinstance(note_array, np.ndarray):
         note_array = note_array.detach().cpu().numpy()
+    
+    if note_array.ndim == 3:
+        assert note_array.shape[0] == 1, "Expected note_array to be of shape (N, 4) or (1, N, 4)."
+        note_array = note_array[0]
+    
 
     scaled_pitches = np.clip(note_array[:, 0], 0, 127).astype(np.int8)
     velocities = np.clip(note_array[:, 1] * 127, 0, 127).astype(np.int8)
@@ -47,7 +67,7 @@ def plot_piano_roll_from_note_events(note_array: torch.Tensor|np.ndarray, figsiz
     return fig, ax
 
 
-def compare_reco_true(true: torch.Tensor|np.ndarray, reco: torch.Tensor|np.ndarray, figsize=(10, 4), threshold=0.5):
+def compare_reco_true(true: torch.Tensor|np.ndarray, reco: torch.Tensor|np.ndarray, figsize=(10, 4), threshold=0.5, show=True):
     """
         Compares true and reconstructed piano rolls.
     """
@@ -64,4 +84,6 @@ def compare_reco_true(true: torch.Tensor|np.ndarray, reco: torch.Tensor|np.ndarr
         Patch(facecolor='red', label='Reconstructed'),
     ]
     plt.legend(handles=legend_elements)
-    plt.show()
+    if show:
+        plt.show()
+    return fig, ax

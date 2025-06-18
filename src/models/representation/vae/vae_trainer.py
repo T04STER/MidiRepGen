@@ -1,13 +1,16 @@
+from dataclasses import dataclass
 import os
 import os.path
 import torch
 import tqdm
 from src.common import torch_writter
+from src.common.trainer.trainer_base import TrainerBase
 from src.models.representation.vae.vae_loss import VaeLoss
 from pathlib import Path
 
-class VaeTrainer:
-    def __init__(self, model, optimizer, loss_fn: VaeLoss, run_name=None, log_every_n_epochs=1, use_tqdm=True):
+
+class VaeTrainer(TrainerBase):
+    def __init__(self, model, optimizer, loss_fn: VaeLoss, run_name=None, use_tqdm=True):
         self.use_tqdm = use_tqdm
         self.model = model
         self.run_name = run_name if run_name else model.__class__.__name__
@@ -79,10 +82,12 @@ class VaeTrainer:
         with torch.no_grad():
             self.writter.add_graph(self.model, input_tensor)
     
-    def log_model_hyperparameters(self, hyperparams: dict):
+    def log_model_hyperparameters(self, hyperparams: dict, metric_dict: dict | None = None):
+        if metric_dict is None:
+            metric_dict = {}
         self.writter.add_hparams(
             hparam_dict=hyperparams,
-            metric_dict={}
+            metric_dict=metric_dict
         )
 
     def save_model(self, path_to_save):
