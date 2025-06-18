@@ -1,13 +1,11 @@
-
-
-
 import torch
-from tqdm import tqdm
+import tqdm
 from src.common import torch_writter
+from src.common.trainer.trainer_base import TrainerBase
 from src.models.diffusion.ddpm import DDPM
 
 
-class DDPMTrainer:
+class DDPMTrainer(TrainerBase):
     def __init__(self, diffusion: DDPM, model, optimizer, run_name=None, use_tqdm=True, device='cuda'):
         """
         Initializes the DDPMTrainer with a diffusion model, a neural network model, and a dataset.
@@ -31,6 +29,7 @@ class DDPMTrainer:
 
     def train_step(self, data):
         self.optimizer.zero_grad()
+        data = data.to(self.device)
         loss = self.diffusion.train_losses(self.model, data)
         loss.backward()
         # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
@@ -59,8 +58,4 @@ class DDPMTrainer:
 
     
     def step_epoch(self):
-        """
-        Perform any necessary operations at the end of an epoch.
-        This can be used to update the model's state or perform logging.
-        """
         pass

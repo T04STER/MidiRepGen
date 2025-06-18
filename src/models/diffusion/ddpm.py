@@ -11,17 +11,18 @@ def _apply(coeficients: torch.Tensor, timesteps: torch.Tensor, x: torch.Tensor) 
 
 
 class DDPM:
-    def __init__(self, num_timesteps: int=1_000):
+    def __init__(self, num_timesteps: int=1_000, device: str='cuda'):
+        self.device = device
         self.num_timesteps = num_timesteps
         self.default_num_timesteps = num_timesteps
-        self.timesteps = torch.arange(0, num_timesteps, dtype=torch.float32)
+        self.timesteps = torch.arange(0, num_timesteps, dtype=torch.float32, device=device)
         self.setup_noise_scheduler()
     
     def setup_noise_scheduler(self, betas:torch.Tensor|None=None):
-        self.betas = torch.linspace(1e-4, 0.02, self.num_timesteps) if betas is None else betas
+        self.betas = torch.linspace(1e-4, 0.02, self.num_timesteps).to(self.device) if betas is None else betas
         self.alphas = 1.0 - self.betas
         self.alpha_bars = torch.cumprod(self.alphas, dim=0)
-        self.alpha_bars_prev = torch.cat((torch.tensor([1.0]), self.alpha_bars[:-1]))
+        self.alpha_bars_prev = torch.cat((torch.tensor([1.0]).to(device=self.device), self.alpha_bars[:-1]))
 
     def q_sample(self, x_start: torch.Tensor, t: torch.Tensor, noise=None) -> torch.Tensor:
         if noise is None:
@@ -69,7 +70,7 @@ class DDPM:
     def train_losses(self, model, x_0):
         loss = 0
         rand_t = torch.randint(0, self.num_timesteps, (x_0.shape[0],), device=x_0.device).long()
-        eps = torch.randn_like(x_0)
+        eps = torch.randn_like(x_0).to(x_0.device)
         x_t = self.q_sample(x_0, rand_t, noise=eps)
         eps_pred = model(x_t, rand_t)
         loss = F.mse_loss(eps_pred, eps)
@@ -112,7 +113,7 @@ class DDPM:
         self.setup_noise_scheduler() 
 
         self.num_timesteps = num_timesteps
-        self.timesteps = torch.linspace(999, 0, self.num_timesteps, dtype=int, endpoint=True)
+        self.timesteps = torch.linspace(999, 0, self.num_timesteps, dtype=torch.float32, ).long()
 
         last_alpha_cumprod = 1.0
 
@@ -123,5 +124,5 @@ class DDPM:
                 betas.append(1 - alpha_bar / last_alpha_cumprod)
                 last_alpha_cumprod = alpha_bar
         
-        self.betas = torch.tensor(betas, dtype=torch.float32)
+        self.betas = torch.tensor(betas, dtype=torch.float32).to(self.device)
         self.setup_noise_scheduler(self.betas)

@@ -94,7 +94,7 @@ def main():
         test_batch = test_batch.cuda()
         vae(test_batch)
 
-    show_summary(vae, (BATCH_SIZE, SEQUENCE_LENGTH, 4), device="cuda")
+    show_summary(vae, (BATCH_SIZE, SEQUENCE_LENGTH, 4), batch_size=BATCH_SIZE)
     
     trainer = VaeTrainer(
         vae,
