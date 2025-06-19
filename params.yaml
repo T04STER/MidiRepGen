@@ -2,3 +2,17 @@ dataset:
   gdrive_url: "https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view"
   out_zip: "data/midi_dataset.zip"
   out_unpacked: "data/midi_dataset"
+
+preprocess:
+  sample_rate: 1 # 0.5
+  out_piano_roll: "data/preprocessed_piano_roll.pkl"
+  out_piano_roll_test: "data/preprocessed_piano_roll_test.pkl"
+  out_note_events: "data/preprocessed_note_events.pkl"
+  out_note_events_test: "data/preprocessed_note_events_test.pkl"
+  note_count: 8
+  frames_per_second: 64
+
+train_note_event_vae:
+  run_name: "default_runner"
+
+random_seed: 42

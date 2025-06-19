@@ -1,2 +1,5 @@
 /midi_dataset.zip
 /midi_dataset
+/preprocessed_piano_roll.pkl
+/preprocessed_note_events.pkl
+/preprocessed_note_events_test.pkl

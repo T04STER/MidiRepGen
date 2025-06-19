@@ -23,3 +23,97 @@ stages:
       md5: 6903c5768276dd84ed86a55c334dde93.dir
       size: 271270589
       nfiles: 10855
+  midi_to_dataset:
+    cmd: python scripts/midi_to_dataset.py
+    deps:
+    - path: data/midi_dataset/
+      hash: md5
+      md5: 6903c5768276dd84ed86a55c334dde93.dir
+      size: 271270589
+      nfiles: 10855
+    - path: scripts/midi_to_dataset.py
+      hash: md5
+      md5: b609f83e13f444746b3921c5ce9ff670
+      size: 3544
+    params:
+      params.yaml:
+        dataset:
+          gdrive_url: https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view
+          out_zip: data/midi_dataset.zip
+          out_unpacked: data/midi_dataset
+    outs:
+    - path: data/preprocessed_piano_roll.pkl
+      hash: md5
+      md5: d233843db19f912b4224c1889e08053e
+      size: 1695025925
+  midi_to_dataset@piano_roll:
+    cmd: python scripts/midi_to_dataset.py --mode piano_roll
+    deps:
+    - path: data/midi_dataset/
+      hash: md5
+      md5: 6903c5768276dd84ed86a55c334dde93.dir
+      size: 271270589
+      nfiles: 10855
+    - path: scripts/midi_to_dataset.py
+      hash: md5
+      md5: b1e0a9e3c7c3784d79f9a833633d4e4b
+      size: 4164
+    params:
+      params.yaml:
+        dataset:
+          gdrive_url: https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view
+          out_zip: data/midi_dataset.zip
+          out_unpacked: data/midi_dataset
+    outs:
+    - path: data/preprocessed_piano_roll.pkl
+      hash: md5
+      md5: d233843db19f912b4224c1889e08053e
+      size: 1695025925
+  midi_to_dataset@note_events:
+    cmd: python scripts/midi_to_dataset.py --mode note_events
+    deps:
+    - path: data/midi_dataset/
+      hash: md5
+      md5: 6903c5768276dd84ed86a55c334dde93.dir
+      size: 271270589
+      nfiles: 10855
+    - path: scripts/midi_to_dataset.py
+      hash: md5
+      md5: 932af879b31e5236b977cb29163e04d9
+      size: 5517
+    params:
+      params.yaml:
+        dataset:
+          gdrive_url: https://drive.google.com/file/d/1BDEPaEWFEB2ADquS1VYp5iLZYVngw799/view
+          out_zip: data/midi_dataset.zip
+          out_unpacked: data/midi_dataset
+        preprocess.note_count: 8
+        preprocess.sample_rate: 1
+    outs:
+    - path: data/preprocessed_note_events.pkl
+      hash: md5
+      md5: 1717ddbfac4fbe1177f407e351d15aa0
+      size: 696320914
+    - path: data/preprocessed_note_events_test.pkl
+      hash: md5
+      md5: 734b247775b9ff8765a925d978b35b68
+      size: 76826105
+  train_note_event_vae:
+    cmd: python scripts/train_note_event_vae.py
+    deps:
+    - path: data/preprocessed_note_events.pkl
+      hash: md5
+      md5: 1717ddbfac4fbe1177f407e351d15aa0
+      size: 696320914
+    - path: scripts/train_note_event_vae.py
+      hash: md5
+      md5: a9b65ae41a47fdcd855b42439fc0ea5d
+      size: 6882
+    params:
+      params.yaml:
+        train_note_event_vae.run_name: default_runner
+    outs:
+    - path: models/default_runner.pt
+      hash: md5
+      md5: 900d69449fe3257889bbbf6101da6b98
+      size: 7365429
