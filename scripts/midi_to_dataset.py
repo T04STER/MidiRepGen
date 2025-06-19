@@ -68,7 +68,6 @@ def event_based_dataset(sampled_midi_files_dir, out_path:str, note_count=None):
     if note_count is None:
         note_count = 32
     dataset = EventMidiDataset(sampled_midi_files_dir, verbose=True, note_count=note_count)
-
     pickle.dump(
         dataset,
         open(out_path, "wb"),

@@ -149,7 +149,7 @@ def parse_midi_file_to_pitch_start_end_tensor(midi_file_path: str) -> Optional[n
         return None
 
     # encode start and end time to as delta of previous note and duration
-    notes.sort(key=lambda x: x[2])
+    notes.sort(key=lambda x: (x[2], x[0]))
     delta_time_notes = []
     for i in range(len(notes)):
         if i == 0:

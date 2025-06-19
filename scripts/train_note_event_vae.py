@@ -146,8 +146,7 @@ def eval_representation(model: RecurrentVaeWithTeacherForcing, dataloader, devic
         reparam = model.encode_with_reparameterization(batch)
         reparam = reparam.detach()
         samples.append(reparam)
-        if len(samples*batch.shape[0]) > 20_000:
-            break
+        break # tSNE is slow but over 4k samples is enough to visualize the representation
     fig, ax = plot_tsne_3d(
         samples,
     )

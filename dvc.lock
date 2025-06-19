@@ -79,8 +79,8 @@ stages:
       nfiles: 10855
     - path: scripts/midi_to_dataset.py
       hash: md5
-      md5: c75975d1f2f2d8d3116304a7528dc3db
-      size: 5518
+      md5: 932af879b31e5236b977cb29163e04d9
+      size: 5517
     params:
       params.yaml:
         dataset:
@@ -92,28 +92,28 @@ stages:
     outs:
     - path: data/preprocessed_note_events.pkl
       hash: md5
-      md5: dc43c850e25f3f719237e34db051fb27
+      md5: 1717ddbfac4fbe1177f407e351d15aa0
       size: 696320914
     - path: data/preprocessed_note_events_test.pkl
       hash: md5
-      md5: 05b147aecc4db90c637a344c51a79073
+      md5: 734b247775b9ff8765a925d978b35b68
       size: 76826105
   train_note_event_vae:
     cmd: python scripts/train_note_event_vae.py
     deps:
     - path: data/preprocessed_note_events.pkl
       hash: md5
-      md5: dc43c850e25f3f719237e34db051fb27
+      md5: 1717ddbfac4fbe1177f407e351d15aa0
       size: 696320914
     - path: scripts/train_note_event_vae.py
       hash: md5
-      md5: 8003fd4f2f84eb73f2f9e19860417fe0
-      size: 6853
+      md5: a9b65ae41a47fdcd855b42439fc0ea5d
+      size: 6882
     params:
       params.yaml:
         train_note_event_vae.run_name: default_runner
     outs:
     - path: models/default_runner.pt
       hash: md5
-      md5: 8cf94cc314f1650baf5f3304b01ace16
+      md5: 900d69449fe3257889bbbf6101da6b98
       size: 7365429
