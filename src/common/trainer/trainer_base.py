@@ -32,6 +32,7 @@ class TrainerBase:
         path_to_load = Path(path)
         if not path_to_load.exists():
             raise FileNotFoundError(f"Model file not found: {path_to_load}")
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print(f"Loading model from {path_to_load}")
         self.model.load_state_dict(torch.load(path, map_location=self.device))
         self.model.to(self.device)

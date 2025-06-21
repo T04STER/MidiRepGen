@@ -29,7 +29,6 @@ class DDPM:
             noise = torch.randn_like(x_start)
 
         x_t_mu = _apply(self.alpha_bars, t, x_start)
-        x_t_sigma = _apply(self.betas.sqrt(), t, torch.ones_like(x_start))
         x_t_sigma = _apply(torch.sqrt(1.0 - self.alpha_bars), t, noise)
         x_t = x_t_mu + x_t_sigma
         return x_t
