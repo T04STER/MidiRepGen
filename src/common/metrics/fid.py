@@ -163,37 +163,27 @@ def note_events_to_pretty_midi(note_array: torch.Tensor | np.ndarray, path="eg.m
 
 
 
-# def calculate_fad(real_midi_path, output_data_path, model, sampler, fid_sample_size=1000, batch_size=64, num_timesteps=1000):
-#     """
-#     Function that calculates the FAD score between real and generated data.
+def calculate_fad(real_path, generated_path):
+    """
+    Function that calculates the FAD score between real and generated data.
 
-#     :model: denoising network responsible for generating data
-#     :sampler: sampler (DDPM or DDIM) that generates data according to the reverse process
-#     :ds: dataset with real data
-#     :fad_sample_size: number of samples to generate and embed
-#     :batch_size: size of the batch for generation
-#     :num_timesteps: number of diffusion steps in the generation process
+    :real_path: path to directory with real audio files
+    :generated_path: path to directory with generated audio files
 
-#     :return: FAD score
-#     """
-    
-#     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    :return: FAD score
+    """
+    frechet = FrechetAudioDistance(
+        model_name="vggish",
+        sample_rate=16000,
+        use_pca=False, 
+        use_activation=False,
+        verbose=False
+    )
 
+    fad_score = frechet.score(
+        real_path, 
+        generated_path, 
+        dtype="float32"
+    )
 
-#     # calculate FAD score
-#     frechet = FrechetAudioDistance(
-#         model_name="vggish",
-#         sample_rate=16000,
-#         use_pca=False, 
-#         use_activation=False,
-#         verbose=False
-#     )
-
-#     fad_score = frechet.score(
-#         REAL_PAHT, 
-#         GENERATED_PATH, 
-#         dtype="float32"
-#     )
-
-    
-#     return fad_score
+    return fad_score

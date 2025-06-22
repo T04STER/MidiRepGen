@@ -16,3 +16,10 @@ train_note_event_vae:
   run_name: "default_runner"
 
 random_seed: 42
+
+fad:
+  real_wavs: "data/output/real_wav"
+  generated_wavs_ddpm: "data/output/generated_wav_ddpm"
+  generated_wavs_vae: "data/output/generated_wav_vae"
+  generated_wavs_ddim: "data/output/generated_wav_ddim"
+  output_fad: "data/output/fad.json"
