@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from tqdm import tqdm
+import numpy as np
 
 def _apply(coeficients: torch.Tensor, timesteps: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
     factors = coeficients[timesteps.long()].float()
@@ -33,27 +34,25 @@ class DDPM:
         x_t = x_t_mu + x_t_sigma
         return x_t
     
-    def q_posterior(self, x_start: torch.Tensor, x_t: torch.Tensor, t: torch.Tensor, noise=None) -> torch.Tensor:
+    def q_posterior(self, x_t, x_0, t, noise=None):
         if noise is None:
-            noise = torch.randn_like(x_start)
+            noise = torch.randn_like(x_0)
 
-        ones = torch.ones_like(x_t)
-        alpha_sqrt = _apply(self.alphas, t, ones).sqrt()
-        alpha_bar_prev_sqrt = _apply(self.alpha_bars_prev, t, ones).sqrt()
-        betas = _apply(self.betas, t, ones)
-        _1_prev_alpha_bar = 1 - _apply(self.alpha_bars_prev, t, ones)
-        _1_alpha_bar = 1- _apply(self.alpha_bars, t, ones)
+        sqrt_alpha = np.sqrt(self.alphas)
+        one_minus_alpha_bar = (1.0 - self.alpha_bars)
+        one_minus_alpha_bar_prev = (1.0 - self.alpha_bars_prev)
+        sqrt_alpha_bar_prev = np.sqrt(self.alpha_bars_prev)
 
-        numerator = (
-            (alpha_sqrt * _1_prev_alpha_bar * x_t ) 
-            + (alpha_bar_prev_sqrt * betas * x_start)
-        )
-        mu = numerator / (_1_alpha_bar + 10e-8)
-        sigma = torch.sqrt(
-            (betas * _1_prev_alpha_bar) / (_1_alpha_bar + 10e-8)
-        )
+        coef1 = sqrt_alpha * one_minus_alpha_bar_prev / one_minus_alpha_bar
+        coef2 = sqrt_alpha_bar_prev * self.betas / one_minus_alpha_bar
+        mean = _apply(coef1, t, x_t) + _apply(coef2, t, x_0)
 
-        return mu + sigma * noise
+        var_coeff = self.betas * one_minus_alpha_bar_prev / one_minus_alpha_bar
+        std = np.sqrt(var_coeff + 1e-8)
+
+        result = mean + _apply(std, t, noise)
+        result = result.to(self.device)
+        return result
     
     def _predict_x_0_from_eps(self, x_t, t, eps):
         return (
