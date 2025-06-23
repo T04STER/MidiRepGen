@@ -71,8 +71,7 @@ Performance Metrics
 | DDPM   | –        | –           | ~9:00+                        | **0.565**     |
 
 - **VAE** achieves the highest speed with moderate quality.
-- **DDIM** produces the best overall quality (lowest FAD).
-- **DDPM** slightly outperforms DDIM in FAD but is still slow.
+- **DDPM** slightly outperforms DDIM in FAD but is slow.
 
 ## Key Findings
 
