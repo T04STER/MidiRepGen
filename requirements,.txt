@@ -1,0 +1,6 @@
+dvc==3.59.2
+gdown==5.2.0
+pretty-midi==0.2.10
+# torch
+tensorboard==2.19.0
+frechet_audio_distance  
