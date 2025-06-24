@@ -13,21 +13,31 @@ import pickle
 import random
 import torch
 from src.dataloader.dataset import PianoRollMidiDataset, EventMidiDataset
-from src.common.config_utils import get_config
+from src.common.config_utils import get_config, seed_all
 
 
-def subsample(records, sample_rate=0.1):
+def subsample(records, sample_rate=0.1, split_rate=0.1):
     """
         Selects a random sample of MIDI files from the dataset and converts them to tensors.
         :param records: List of MIDI file paths.
         :param sample_rate: Fraction of records to sample (between 0 and 1).
+        :param split_rate: Fraction of records to split into train and test sets.
         :return: List of MIDI file paths sampled from the dataset.
     """
-    if sample_rate <= 0 or sample_rate > 1:
+    if sample_rate < 0 or sample_rate > 1:
         raise ValueError("Sample rate must be between 0 and 1.")
     
+    if split_rate < 0 or split_rate > 1:
+        raise ValueError("Split rate must be between 0 and 1.")
+    
     sample_size = int(len(records) * sample_rate)
-    return random.sample(records, sample_size)
+    sampled = random.sample(records, sample_size)
+
+    test_size = int(len(sampled) * split_rate)
+    test_records = sampled[:test_size]
+    train_records = sampled[test_size:]
+
+    return train_records, test_records
 
 
 def get_argparser():
@@ -58,7 +68,6 @@ def event_based_dataset(sampled_midi_files_dir, out_path:str, note_count=None):
     if note_count is None:
         note_count = 32
     dataset = EventMidiDataset(sampled_midi_files_dir, verbose=True, note_count=note_count)
-
     pickle.dump(
         dataset,
         open(out_path, "wb"),
@@ -68,8 +77,7 @@ def event_based_dataset(sampled_midi_files_dir, out_path:str, note_count=None):
 def main(args):
     config = get_config()
     if seed := config.get("random_seed"):
-        random.seed(seed)
-        torch.manual_seed(seed)
+        seed_all(seed)
     
     dataset_config = config["dataset"]
     midi_files_dir_str = dataset_config["out_unpacked"]
@@ -82,8 +90,9 @@ def main(args):
     
     preprocess_config = config.get("preprocess", {})
     sample_rate = preprocess_config.get("sample_rate", 0.1)
-    midi_files = subsample(midi_all_files, sample_rate=sample_rate)
-    midi_files = [str(f) for f in midi_files]
+    midi_files_train, midi_files_test  = subsample(midi_all_files, sample_rate=sample_rate)
+    midi_files_train = [str(f) for f in midi_files_train]
+    midi_files_test = [str(f) for f in midi_files_test]
     match args.mode:
         case "piano_roll":
             out_path = preprocess_config.get("out_piano_roll")
@@ -91,14 +100,26 @@ def main(args):
                 raise ValueError("Output path for piano roll dataset is not specified in the config.")
             if not out_path.endswith(".pkl"):
                 raise ValueError("Output path for piano roll dataset must end with .pkl")
-            piano_roll_dataset(midi_files, out_path, frame_per_second=preprocess_config.get("frame_per_second", 64))
+            piano_roll_dataset(midi_files_train, out_path, frame_per_second=preprocess_config.get("frame_per_second", 64))
+            out_path_test = preprocess_config.get("out_piano_roll_test")
+            if not out_path_test:
+                raise ValueError("Output path for piano roll dataset is not specified in the config.")
+            if not out_path_test.endswith(".pkl"):
+                raise ValueError("Output path for piano roll dataset must end with .pkl")
+            piano_roll_dataset(midi_files_test, out_path_test, frame_per_second=preprocess_config.get("frame_per_second", 64))
         case "note_events":
             out_path = preprocess_config.get("out_note_events")
             if not out_path:
                 raise ValueError("Output path for note events dataset is not specified in the config.")
             if not out_path.endswith(".pkl"):
                 raise ValueError("Output path for note events dataset must end with .pkl")
-            event_based_dataset(midi_files, out_path, note_count=preprocess_config.get("note_count"))
+            event_based_dataset(midi_files_train, out_path, note_count=preprocess_config.get("note_count"))
+            out_path_test = preprocess_config.get("out_note_events_test")
+            if not out_path_test:
+                raise ValueError("Output path for note events test dataset is not specified in the config.")
+            if not out_path_test.endswith(".pkl"):
+                raise ValueError("Output path for note events test dataset must end with .pkl")
+            event_based_dataset(midi_files_test, out_path_test, note_count=preprocess_config.get("note_count"))
         case _:
             raise ValueError(f"Unknown mode: {args.mode}")
 

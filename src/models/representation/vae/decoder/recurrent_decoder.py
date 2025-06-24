@@ -124,7 +124,7 @@ class LSTMVaeDecoderWithTeacherForcingPitchEmbedded(LSTMVaeDecoder):
         hidden = self.lattent_to_h0_c0(z)
         input_token = self.start_token.unsqueeze(0).repeat(batch_size, 1, 1)
 
-        true_output = self.true_output_to_lstm_input(true_output) if true_output is not None else None
+        true_output = self.true_output_to_lstm_input(true_output) if true_output is not None and self.training else None
         for t in range(seq_length):
             (pitch, other), hidden = self.autoregressive_step(input_token, hidden)
             input_token = torch.cat((pitch, other), dim=-1)  # Concatenate pitch and other dimensions
@@ -172,8 +172,8 @@ class LSTMVaeDecoderWithTeacherForcingPitchEmbeddedResidualMemory(LSTMVaeDecoder
         Convert latent vector z to hidden and cell states for LSTM.
         """
         z = z.unsqueeze(0)
-        h0 = self.latent_to_hidden(z).repeat(self.num_layers, 1, 1)  # [num_layers, batch_size, hidden_dim]
-        c0 = self.latent_to_cell(z).repeat(self.num_layers, 1, 1)  # [num_layers, batch_size, hidden_dim]
+        h0 = torch.tanh(self.latent_to_hidden(z)).repeat(self.num_layers, 1, 1)  # [num_layers, batch_size, hidden_dim]
+        c0 = torch.tanh(self.latent_to_cell(z)).repeat(self.num_layers, 1, 1)  # [num_layers, batch_size, hidden_dim]
         return h0, c0
 
 

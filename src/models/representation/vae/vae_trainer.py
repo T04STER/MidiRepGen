@@ -1,17 +1,19 @@
+from dataclasses import dataclass
 import os
 import os.path
 import torch
 import tqdm
 from src.common import torch_writter
+from src.common.trainer.trainer_base import TrainerBase
 from src.models.representation.vae.vae_loss import VaeLoss
 from pathlib import Path
 
-class VaeTrainer:
-    def __init__(self, model, optimizer, loss_fn: VaeLoss, run_name=None, log_every_n_epochs=1, use_tqdm=True):
+
+class VaeTrainer(TrainerBase):
+    def __init__(self, model, optimizer, loss_fn: VaeLoss, run_name=None, use_tqdm=True):
         self.use_tqdm = use_tqdm
         self.model = model
         self.run_name = run_name if run_name else model.__class__.__name__
-        self.log_every_n_epochs = log_every_n_epochs
         self.optimizer = optimizer
         self.loss_fn = loss_fn
         self.writter = torch_writter.get_writter(self.run_name, prefix="vae")
@@ -46,19 +48,29 @@ class VaeTrainer:
                 total_loss += loss
                 for j, other in enumerate(others):
                     total_others[j] += other
-            self.model.decoder.step_teacher_forcing()
             avg_loss = total_loss / len(dataloader)
             self.writter.add_scalar("Loss/Train", avg_loss, epoch)
             for j, other in enumerate(total_others):
                 name = other_losses.get(j, f"Other Loss {j}")
                 other /= len(dataloader)
                 self.writter.add_scalar(f"Loss/Train/{name}", other, epoch)
+            self.step_epoch()
             if self.use_tqdm:
                 iter_epochs.set_description(f"Epoch {epoch + 1}/{epochs} - Loss: {avg_loss:.4f}")
             
         print("Training complete.")
         self.writter.flush()
         self.writter.close()
+
+    
+    def step_epoch(self):
+        """
+        Perform any necessary operations at the end of an epoch.
+        This can be used to update the model's state or perform logging.
+        """
+        self.model.decoder.step_teacher_forcing()
+        if getattr(self.loss_fn, 'kl_annealing', False):
+            self.loss_fn.annealing_step()
     
     def graph_model(self, input_tensor):
         """
@@ -70,10 +82,12 @@ class VaeTrainer:
         with torch.no_grad():
             self.writter.add_graph(self.model, input_tensor)
     
-    def log_model_hyperparameters(self, hyperparams: dict):
+    def log_model_hyperparameters(self, hyperparams: dict, metric_dict: dict | None = None):
+        if metric_dict is None:
+            metric_dict = {}
         self.writter.add_hparams(
             hparam_dict=hyperparams,
-            metric_dict={}
+            metric_dict=metric_dict
         )
 
     def save_model(self, path_to_save):

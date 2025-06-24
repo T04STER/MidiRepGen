@@ -18,5 +18,17 @@ stages:
     params:
       - dataset
       - preprocess.sample_rate
+      - preprocess.note_count
     outs:
       - data/preprocessed_${item.mode}.pkl
+      - data/preprocessed_${item.mode}_test.pkl
+
+  train_note_event_vae:
+    cmd: python scripts/train_note_event_vae.py
+    params:
+      - train_note_event_vae.run_name
+    deps:
+      - scripts/train_note_event_vae.py
+      - data/preprocessed_note_events.pkl
+    outs:
+      - models/${train_note_event_vae.run_name}.pt
